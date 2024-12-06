@@ -1,0 +1,7 @@
+{
+  "name": "xpense",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
