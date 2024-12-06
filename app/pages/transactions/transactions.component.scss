@@ -1,0 +1,25 @@
+ion-content {
+    --background: var(--ion-color-light);
+  }
+  
+  ion-list {
+    background: transparent;
+  }
+  
+  ion-item {
+    --background: var(--ion-color-light);
+    margin-bottom: 8px;
+    border-radius: 8px;
+    --border-radius: 8px;
+  }
+  
+  ion-note {
+    font-size: 1.1em;
+    font-weight: bold;
+  }
+  
+  ion-fab-button {
+    --background: var(--ion-color-primary);
+  }
+  
+  
