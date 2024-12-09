@@ -1,7 +1,7 @@
 <ion-header>
   <ion-toolbar>
     <ion-buttons slot="start">
-      <ion-back-button defaultHref="/transactions"></ion-back-button>
+      <ion-back-button defaultHref="/tabs/transactions"></ion-back-button>
     </ion-buttons>
     <ion-title>Transaction Detail</ion-title>
   </ion-toolbar>
@@ -10,7 +10,7 @@
 <ion-content class="ion-padding">
   <ion-card *ngIf="transaction">
     <ion-card-header>
-      <ion-card-title>{{ transaction.category }}</ion-card-title>
+      <ion-card-title>{{ transaction.description }}</ion-card-title>
       <ion-card-subtitle>{{ transaction.date | date:'mediumDate' }}</ion-card-subtitle>
     </ion-card-header>
     <ion-card-content>
@@ -20,15 +20,22 @@
           {{ transaction.amount | currency }}
         </ion-note>
       </ion-item>
-      <ion-item>
-        <ion-label>Description</ion-label>
-        <ion-text slot="end">{{ transaction.description }}</ion-text>
-      </ion-item>
       <ion-item *ngIf="transaction.latitude && transaction.longitude">
         <ion-label>Location</ion-label>
         <ion-text slot="end">{{ transaction.latitude }}, {{ transaction.longitude }}</ion-text>
       </ion-item>
     </ion-card-content>
   </ion-card>
+
+  <div class="ion-text-center ion-padding-top">
+    <ion-button expand="block" (click)="editTransaction()" color="primary">
+      <ion-icon name="create" slot="start"></ion-icon>
+      Edit Transaction
+    </ion-button>
+    <ion-button expand="block" (click)="deleteTransaction()" color="danger" class="ion-margin-top">
+      <ion-icon name="trash" slot="start"></ion-icon>
+      Delete Transaction
+    </ion-button>
+  </div>
 </ion-content>
 

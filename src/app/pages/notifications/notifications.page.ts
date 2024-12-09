@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-notifications',
@@ -6,11 +7,21 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./notifications.page.scss'],
 })
 export class NotificationsPage implements OnInit {
+  notifications = [
+    {
+      title: 'Transaction Reminder',
+      message: 'Dont forget to log your expenses for today.',
+      hasNotification: false
+    },
+    {
+      title: 'Spending Limit Reached',
+      message: 'Youve reached your spending limit for the month.',
+      hasNotification: true
+    }
+  ];
 
-  constructor() { }
+  constructor(private notificationService: NotificationService) {}
 
-  ngOnInit() {
-  }
-
+  ngOnInit() {}
 }
 

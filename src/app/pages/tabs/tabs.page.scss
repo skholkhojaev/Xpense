@@ -6,5 +6,20 @@ ion-tab-bar {
 ion-tab-button {
   --color-selected: var(--ion-tab-bar-color-selected);
   --background-selected: var(--ion-tab-bar-background-selected);
+  position: relative;
+}
+
+.notification-tab {
+  position: relative;
+}
+
+.tab-notification-dot {
+  position: absolute;
+  top: 8px;
+  right: calc(50% - 18px);
+  width: 8px;
+  height: 8px;
+  background-color: red;
+  border-radius: 50%;
 }
 

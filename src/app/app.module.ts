@@ -4,27 +4,18 @@ import { RouteReuseStrategy } from '@angular/router';
 import { IonicModule, IonicRouteStrategy } from '@ionic/angular';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { SupabaseService } from './services/supabase.service';
-import { createClient } from '@supabase/supabase-js';
-import { environment } from '../environments/environment';
 
 @NgModule({
-  declarations: [],
+  declarations: [AppComponent],
   imports: [
-    BrowserModule, 
-    IonicModule.forRoot(), 
-    AppRoutingModule,
-    AppComponent
+    BrowserModule,
+    IonicModule.forRoot(),
+    AppRoutingModule
   ],
   providers: [
-    { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
-    SupabaseService,
-    {
-      provide: 'SUPABASE_CLIENT',
-      useFactory: () => createClient(environment.supabaseUrl, environment.supabaseKey)
-    }
+    { provide: RouteReuseStrategy, useClass: IonicRouteStrategy }
   ],
-  bootstrap: [AppComponent],
+  bootstrap: [AppComponent]
 })
 export class AppModule {}
 

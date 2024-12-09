@@ -13,63 +13,94 @@ export class SupabaseService {
   }
 
   async getTransactions() {
-    console.log('Fetching transactions...');
-    const result = await this.supabase
+    const { data, error } = await this.supabase
       .from('transactions')
       .select('*')
       .order('created_at', { ascending: false });
-    console.log('Fetch result:', result);
-    return result;
+    return { data, error };
   }
 
   async getTransactionById(id: string) {
-    console.log('Fetching transaction by ID:', id);
-    const result = await this.supabase
+    const { data, error } = await this.supabase
       .from('transactions')
       .select('*')
       .eq('id', id)
       .single();
-    console.log('Fetch by ID result:', result);
-    return result;
+    return { data, error };
   }
 
   async addTransaction(transaction: any) {
-    console.log('Adding transaction:', transaction);
-    const result = await this.supabase
+    const { data, error } = await this.supabase
       .from('transactions')
       .insert({
         amount: parseFloat(transaction.amount),
         description: transaction.description,
         date: new Date(transaction.date).toISOString(),
-        // Remove the category field if it doesn't exist in the database
-        // category: transaction.category,
         latitude: transaction.latitude,
         longitude: transaction.longitude
       })
       .select();
-    console.log('Add result:', result);
-    return result;
+    return { data, error };
   }
 
   async updateTransaction(id: string, transaction: any) {
-    console.log('Updating transaction:', id, transaction);
-    const result = await this.supabase
+    const { data, error } = await this.supabase
       .from('transactions')
       .update(transaction)
       .eq('id', id)
       .select();
-    console.log('Update result:', result);
-    return result;
+    return { data, error };
   }
 
   async deleteTransaction(id: string) {
-    console.log('Deleting transaction:', id);
-    const result = await this.supabase
+    const { error } = await this.supabase
       .from('transactions')
       .delete()
       .eq('id', id);
-    console.log('Delete result:', result);
-    return result;
+    return { error };
+  }
+
+  async setSpendingLimit(limit: number) {
+    try {
+      const { data, error } = await this.supabase
+        .from('spending_limits')
+        .upsert({ id: 1, monthly_limit: limit })
+        .select();
+      
+      if (error) {
+        console.error('Error setting spending limit:', error);
+        throw new Error(`Failed to set spending limit: ${error.message}`);
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Error in setSpendingLimit:', error);
+      throw error;
+    }
+  }
+
+  async getSpendingLimit() {
+    try {
+      const { data, error } = await this.supabase
+        .from('spending_limits')
+        .select('monthly_limit')
+        .eq('id', 1)
+        .single();
+      
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No data found, return default limit
+          return 0;
+        }
+        console.error('Error getting spending limit:', error);
+        throw new Error(`Failed to get spending limit: ${error.message}`);
+      }
+      
+      return data?.monthly_limit || 0;
+    } catch (error) {
+      console.error('Error in getSpendingLimit:', error);
+      throw error;
+    }
   }
 }
 

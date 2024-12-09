@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { AlertController, LoadingController, ToastController } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { SupabaseService } from '../../services/supabase.service';
+import { NotificationService } from '../../services/notification.service';
 import { Geolocation } from '@capacitor/geolocation';
 
 interface Transaction {
@@ -11,8 +12,6 @@ interface Transaction {
   date: string;
   latitude?: number;
   longitude?: number;
-  // Remove category if it doesn't exist in the database
-  // category: string;
 }
 
 @Component({
@@ -23,9 +22,11 @@ interface Transaction {
 export class TransactionsPage implements OnInit {
   transactions: Transaction[] = [];
   isLoading = false;
+  spendingLimit: number | null = null;
 
   constructor(
     private supabaseService: SupabaseService,
+    private notificationService: NotificationService,
     private alertController: AlertController,
     private loadingController: LoadingController,
     private toastController: ToastController,
@@ -34,6 +35,7 @@ export class TransactionsPage implements OnInit {
 
   ngOnInit() {
     this.loadTransactions();
+    this.loadSpendingLimit();
   }
 
   async loadTransactions() {
@@ -41,12 +43,45 @@ export class TransactionsPage implements OnInit {
     try {
       const { data, error } = await this.supabaseService.getTransactions();
       if (error) throw error;
-      this.transactions = data;
+      this.transactions = data || [];
+      this.checkMonthlyTotal();
     } catch (error) {
       console.error('Error loading transactions:', error);
       this.showToast('Failed to load transactions');
     } finally {
       this.isLoading = false;
+    }
+  }
+
+  async loadSpendingLimit() {
+    try {
+      this.spendingLimit = await this.supabaseService.getSpendingLimit();
+      this.checkMonthlyTotal();
+    } catch (error) {
+      console.error('Error loading spending limit:', error);
+      this.showToast('Failed to load spending limit');
+    }
+  }
+
+  checkMonthlyTotal() {
+    if (this.spendingLimit !== null && this.transactions.length > 0) {
+      const currentDate = new Date();
+      const currentMonth = currentDate.getMonth();
+      const currentYear = currentDate.getFullYear();
+
+      const monthlyTotal = this.transactions
+        .filter(t => {
+          const transactionDate = new Date(t.date);
+          return transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
+        })
+        .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+      if (monthlyTotal > this.spendingLimit) {
+        this.notificationService.setNotification(true);
+        this.showToast(`You've exceeded your monthly spending limit of ${this.spendingLimit}!`);
+      } else {
+        this.notificationService.setNotification(false);
+      }
     }
   }
 
@@ -69,12 +104,6 @@ export class TransactionsPage implements OnInit {
           type: 'date',
           placeholder: 'Date'
         }
-        // Remove category input if it doesn't exist in the database
-        // {
-        //   name: 'category',
-        //   type: 'text',
-        //   placeholder: 'Category'
-        // },
       ],
       buttons: [
         {
@@ -105,8 +134,6 @@ export class TransactionsPage implements OnInit {
     await loading.present();
 
     try {
-      console.log('Transaction data before API call:', transactionData);
-      
       let coordinates;
       try {
         coordinates = await Geolocation.getCurrentPosition();
@@ -114,24 +141,16 @@ export class TransactionsPage implements OnInit {
         transactionData.longitude = coordinates.coords.longitude;
       } catch (geoError) {
         console.warn('Geolocation error:', geoError);
-        // Proceed without coordinates if geolocation fails
       }
-
-      console.log('Transaction data with coordinates:', transactionData);
 
       const { data, error } = await this.supabaseService.addTransaction(transactionData);
       
-      console.log('API response:', { data, error });
-
-      if (error) {
-        console.error('Supabase error:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       if (data && data.length > 0) {
-        console.log('New transaction:', data[0]);
         this.transactions.unshift(data[0]);
         this.showToast('Transaction added successfully');
+        this.checkMonthlyTotal();
       } else {
         throw new Error('No data returned from Supabase');
       }
@@ -174,10 +193,11 @@ export class TransactionsPage implements OnInit {
       const { data, error } = await this.supabaseService.updateTransaction(id, transactionData);
       if (error) throw error;
       const index = this.transactions.findIndex(t => t.id === id);
-      if (index !== -1) {
+      if (index !== -1 && data) {
         this.transactions[index] = data[0];
       }
       this.showToast('Transaction updated successfully');
+      this.checkMonthlyTotal();
     } catch (error) {
       console.error('Error updating transaction:', error);
       this.showToast('Failed to update transaction');
@@ -210,6 +230,7 @@ export class TransactionsPage implements OnInit {
       if (error) throw error;
       this.transactions = this.transactions.filter(t => t.id !== id);
       this.showToast('Transaction deleted successfully');
+      this.checkMonthlyTotal();
     } catch (error) {
       console.error('Error deleting transaction:', error);
       this.showToast('Failed to delete transaction');
