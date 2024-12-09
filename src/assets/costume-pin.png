@@ -1,0 +1,42 @@
+// Assuming this is a Python script interacting with a GUI framework like Tkinter or PyQt
+
+import tkinter as tk
+from tkinter import filedialog
+from PIL import Image, ImageTk
+
+def choose_pin_image():
+    """Opens a file dialog to select a custom pin image."""
+    filepath = filedialog.askopenfilename(
+        title="Select Pin Image",
+        filetypes=(("Image files", "*.png *.jpg *.jpeg *.gif"), ("All files", "*.*"))
+    )
+    if filepath:
+        try:
+            # Load the image using Pillow library
+            img = Image.open(filepath)
+            # Resize the image if needed (adjust size as per your requirements)
+            img = img.resize((50, 50)) # Example resize to 50x50 pixels
+            photo = ImageTk.PhotoImage(img)
+            # Assuming you have a label to display the image (replace 'pin_image_label' with your actual label name)
+            pin_image_label.config(image=photo)
+            pin_image_label.image = photo # Keep a reference to prevent garbage collection
+        except Exception as e:
+            print(f"Error loading image: {e}")
+
+
+# ... rest of your GUI code ...
+
+# Example GUI setup (replace with your actual GUI code)
+root = tk.Tk()
+root.title("Pin Image Selector")
+
+# Button to trigger image selection
+choose_button = tk.Button(root, text="Choose Pin Image", command=choose_pin_image)
+choose_button.pack(pady=10)
+
+# Label to display the selected image
+pin_image_label = tk.Label(root)
+pin_image_label.pack()
+
+root.mainloop()
+

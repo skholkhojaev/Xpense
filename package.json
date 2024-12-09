@@ -29,8 +29,10 @@
     "@capacitor/keyboard": "6.0.3",
     "@capacitor/status-bar": "6.0.2",
     "@ionic/angular": "^8.0.0",
-    "@supabase/supabase-js": "^2.47.2",
+    "@supabase/supabase-js": "^2.47.3",
+    "@types/leaflet": "^1.9.15",
     "ionicons": "^7.2.1",
+    "leaflet": "^1.9.4",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.14.2"

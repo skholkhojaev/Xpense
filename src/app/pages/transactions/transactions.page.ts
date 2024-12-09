@@ -3,7 +3,7 @@ import { AlertController, LoadingController, ToastController } from '@ionic/angu
 import { Router } from '@angular/router';
 import { SupabaseService } from '../../services/supabase.service';
 import { NotificationService } from '../../services/notification.service';
-import { Geolocation } from '@capacitor/geolocation';
+import { Geolocation, PermissionStatus } from '@capacitor/geolocation';
 
 interface Transaction {
   id: string;
@@ -86,6 +86,7 @@ export class TransactionsPage implements OnInit {
   }
 
   async addTransaction() {
+    const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
     const alert = await this.alertController.create({
       header: 'Add Transaction',
       inputs: [
@@ -102,7 +103,8 @@ export class TransactionsPage implements OnInit {
         {
           name: 'date',
           type: 'date',
-          placeholder: 'Date'
+          placeholder: 'Date',
+          value: today // Set default value to today
         }
       ],
       buttons: [
@@ -111,7 +113,18 @@ export class TransactionsPage implements OnInit {
           role: 'cancel'
         },
         {
-          text: 'Add',
+          text: 'Add with Location',
+          handler: (data) => {
+            if (!data.amount || !data.description || !data.date) {
+              this.showToast('Please fill in all fields');
+              return false;
+            }
+            this.captureLocation(data);
+            return false;
+          }
+        },
+        {
+          text: 'Add without Location',
           handler: (data) => {
             if (!data.amount || !data.description || !data.date) {
               this.showToast('Please fill in all fields');
@@ -127,6 +140,54 @@ export class TransactionsPage implements OnInit {
     await alert.present();
   }
 
+  async captureLocation(transactionData: any) {
+    try {
+      const permissionStatus = await this.checkLocationPermission();
+      if (permissionStatus === 'granted') {
+        const coordinates = await this.getCurrentPosition();
+        transactionData.latitude = coordinates.latitude;
+        transactionData.longitude = coordinates.longitude;
+        this.createTransaction(transactionData);
+      } else {
+        this.showToast('Location permission is required to add location to the transaction.');
+      }
+    } catch (error) {
+      console.error('Error capturing location:', error);
+      this.showToast('Failed to capture location. Please try again.');
+    }
+  }
+
+  async checkLocationPermission(): Promise<PermissionStatus['location']> {
+    try {
+      const status = await Geolocation.checkPermissions();
+      if (status.location === 'prompt') {
+        const requestStatus = await Geolocation.requestPermissions();
+        return requestStatus.location;
+      }
+      return status.location;
+    } catch (error) {
+      console.error('Error checking location permission:', error);
+      return 'denied' as PermissionStatus['location'];
+    }
+  }
+
+  async getCurrentPosition(): Promise<{ latitude: number; longitude: number }> {
+    try {
+      const position = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      });
+      return {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude
+      };
+    } catch (error) {
+      console.error('Error getting current position:', error);
+      throw error;
+    }
+  }
+
   async createTransaction(transactionData: any) {
     const loading = await this.loadingController.create({
       message: 'Adding transaction...'
@@ -134,15 +195,6 @@ export class TransactionsPage implements OnInit {
     await loading.present();
 
     try {
-      let coordinates;
-      try {
-        coordinates = await Geolocation.getCurrentPosition();
-        transactionData.latitude = coordinates.coords.latitude;
-        transactionData.longitude = coordinates.coords.longitude;
-      } catch (geoError) {
-        console.warn('Geolocation error:', geoError);
-      }
-
       const { data, error } = await this.supabaseService.addTransaction(transactionData);
       
       if (error) throw error;

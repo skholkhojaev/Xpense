@@ -1,15 +1,17 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { AlertController, LoadingController, NavController, ToastController } from '@ionic/angular';
 import { SupabaseService } from '../../services/supabase.service';
+import * as L from 'leaflet';
 
 @Component({
   selector: 'app-transaction-detail',
   templateUrl: './transaction-detail.page.html',
   styleUrls: ['./transaction-detail.page.scss'],
 })
-export class TransactionDetailPage implements OnInit {
+export class TransactionDetailPage implements OnInit, AfterViewInit {
   transaction: any;
+  private map!: L.Map;
 
   constructor(
     private route: ActivatedRoute,
@@ -27,6 +29,15 @@ export class TransactionDetailPage implements OnInit {
     }
   }
 
+  ngAfterViewInit() {
+    setTimeout(() => {
+      this.initMap();
+      if (this.transaction) {
+        this.updateMapMarker();
+      }
+    }, 100);
+  }
+
   async loadTransaction(id: string) {
     const { data, error } = await this.supabaseService.getTransactionById(id);
     if (error) {
@@ -34,9 +45,43 @@ export class TransactionDetailPage implements OnInit {
       this.showToast('Failed to load transaction details');
     } else if (data) {
       this.transaction = data;
+      this.updateMapMarker();
     } else {
       this.showToast('Transaction not found');
       this.navCtrl.back();
+    }
+  }
+
+  private initMap(): void {
+    this.map = L.map('transaction-map').setView([0, 0], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(this.map);
+  }
+
+  private createCustomIcon(): L.Icon {
+    return L.icon({
+      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+      iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+    });
+  }
+
+  private updateMapMarker(): void {
+    if (this.transaction && this.transaction.latitude && this.transaction.longitude) {
+      this.map.setView([this.transaction.latitude, this.transaction.longitude], 13);
+      L.marker([this.transaction.latitude, this.transaction.longitude], { icon: this.createCustomIcon() })
+        .addTo(this.map)
+        .bindPopup(`${this.transaction.description}: ${this.transaction.amount.toFixed(2)}`)
+        .openPopup();
+    } else {
+      console.error('Transaction location data is missing');
+      this.map.setView([0, 0], 1); // Set a default view if no location data
     }
   }
 
@@ -68,6 +113,7 @@ export class TransactionDetailPage implements OnInit {
       if (error) throw error;
       if (data && data.length > 0) {
         this.transaction = data[0];
+        this.updateMapMarker();
         this.showToast('Transaction updated successfully');
       } else {
         throw new Error('No data returned from update');

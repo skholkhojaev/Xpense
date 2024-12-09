@@ -36,3 +36,19 @@ ion-note {
   font-weight: bold;
 }
 
+:host {
+  --background: var(--ion-background-color);
+}
+
+:host-context(.dark) {
+  --background: #121212;
+
+  ion-content {
+    --background: #121212;
+  }
+
+  ion-card {
+    --background: #1e1e1e;
+  }
+}
+
