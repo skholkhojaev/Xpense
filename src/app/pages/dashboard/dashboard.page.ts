@@ -18,7 +18,7 @@ export class DashboardPage implements OnInit {
   }
 
   async loadDashboardData() {
-    const { data: transactions, error } = await this.supabaseService.getRecentTransactions();
+    const { data: transactions, error } = await this.supabaseService.getTransactions();
     if (error) {
       console.error('Error fetching transactions:', error);
     } else {

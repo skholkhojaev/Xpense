@@ -50,48 +50,53 @@ export class TransactionsPage implements OnInit {
   }
 
   async addTransaction() {
-    try {
-      const coordinates = await Geolocation.getCurrentPosition();
-      const alert = await this.alertController.create({
-        header: 'Add Transaction',
-        inputs: [
-          { name: 'amount', type: 'number', placeholder: 'Amount' },
-          { name: 'category', type: 'text', placeholder: 'Category' },
-          { name: 'description', type: 'text', placeholder: 'Description' },
-          { name: 'date', type: 'date', placeholder: 'Date' },
-          {
-            name: 'latitude',
-            type: 'text',
-            value: coordinates.coords.latitude.toString(),
-            attributes: { style: 'display: none;' }
-          },
-          {
-            name: 'longitude',
-            type: 'text',
-            value: coordinates.coords.longitude.toString(),
-            attributes: { style: 'display: none;' }
+    const alert = await this.alertController.create({
+      header: 'Add Transaction',
+      inputs: [
+        {
+          name: 'amount',
+          type: 'number',
+          placeholder: 'Amount'
+        },
+        {
+          name: 'category',
+          type: 'text',
+          placeholder: 'Category'
+        },
+        {
+          name: 'description',
+          type: 'text',
+          placeholder: 'Description'
+        },
+        {
+          name: 'date',
+          type: 'date',
+          placeholder: 'Date'
+        }
+      ],
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'Add',
+          handler: (data) => {
+            this.createTransaction(data);
           }
-        ],
-        buttons: [
-          { text: 'Cancel', role: 'cancel' },
-          {
-            text: 'Add',
-            handler: (data) => this.createTransaction(data),
-          },
-        ],
-      });
-      await alert.present();
-    } catch (error) {
-      console.error('Error getting geolocation:', error);
-      this.showToast('Failed to get location. Please check your GPS settings.');
-    }
+        }
+      ]
+    });
+
+    await alert.present();
   }
 
-  async createTransaction(transactionData: Partial<Transaction>) {
-    const loading = await this.loadingController.create({ message: 'Adding transaction...' });
-    await loading.present();
-
+  async createTransaction(transactionData: any) {
     try {
+      const coordinates = await Geolocation.getCurrentPosition();
+      transactionData.latitude = coordinates.coords.latitude;
+      transactionData.longitude = coordinates.coords.longitude;
+
       const { data, error } = await this.supabaseService.addTransaction(transactionData);
       if (error) throw error;
       this.transactions.unshift(data[0]);
@@ -99,8 +104,6 @@ export class TransactionsPage implements OnInit {
     } catch (error) {
       console.error('Error adding transaction:', error);
       this.showToast('Failed to add transaction');
-    } finally {
-      loading.dismiss();
     }
   }
 

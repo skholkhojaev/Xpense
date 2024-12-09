@@ -18,11 +18,19 @@ ion-note {
   font-weight: bold;
 }
 
-ion-fab-button {
-  --background: var(--ion-color-primary);
+.notification-card {
+  margin: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.hidden-input {
-  display: none;
+.notification-title {
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+.notification-time {
+  font-size: 0.9em;
+  color: var(--ion-color-medium);
 }
 

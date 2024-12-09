@@ -4,12 +4,7 @@ import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
 const routes: Routes = [
   {
     path: '',
-    redirectTo: 'transactions',
-    pathMatch: 'full'
-  },
-  {
-    path: 'transactions',
-    loadChildren: () => import('./pages/transactions/transactions.module').then(m => m.TransactionsPageModule)
+    loadChildren: () => import('./pages/tabs/tabs.module').then(m => m.TabsPageModule)
   },
   {
     path: 'transaction-detail/:id',

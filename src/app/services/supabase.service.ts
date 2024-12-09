@@ -30,7 +30,13 @@ export class SupabaseService {
   async addTransaction(transaction: any) {
     return this.supabase
       .from('transactions')
-      .insert(transaction)
+      .insert({
+        ...transaction,
+        amount: parseFloat(transaction.amount),
+        date: new Date(transaction.date).toISOString(),
+        latitude: transaction.latitude,
+        longitude: transaction.longitude
+      })
       .select();
   }
 

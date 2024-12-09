@@ -21,3 +21,4 @@ import { SupabaseService } from './services/supabase.service';
   bootstrap: [AppComponent],
 })
 export class AppModule {}
+
