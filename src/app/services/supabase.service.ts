@@ -13,46 +13,63 @@ export class SupabaseService {
   }
 
   async getTransactions() {
-    return this.supabase
+    console.log('Fetching transactions...');
+    const result = await this.supabase
       .from('transactions')
       .select('*')
-      .order('date', { ascending: false });
+      .order('created_at', { ascending: false });
+    console.log('Fetch result:', result);
+    return result;
   }
 
   async getTransactionById(id: string) {
-    return this.supabase
+    console.log('Fetching transaction by ID:', id);
+    const result = await this.supabase
       .from('transactions')
       .select('*')
       .eq('id', id)
       .single();
+    console.log('Fetch by ID result:', result);
+    return result;
   }
 
   async addTransaction(transaction: any) {
-    return this.supabase
+    console.log('Adding transaction:', transaction);
+    const result = await this.supabase
       .from('transactions')
       .insert({
-        ...transaction,
         amount: parseFloat(transaction.amount),
+        description: transaction.description,
         date: new Date(transaction.date).toISOString(),
+        // Remove the category field if it doesn't exist in the database
+        // category: transaction.category,
         latitude: transaction.latitude,
         longitude: transaction.longitude
       })
       .select();
+    console.log('Add result:', result);
+    return result;
   }
 
   async updateTransaction(id: string, transaction: any) {
-    return this.supabase
+    console.log('Updating transaction:', id, transaction);
+    const result = await this.supabase
       .from('transactions')
       .update(transaction)
       .eq('id', id)
       .select();
+    console.log('Update result:', result);
+    return result;
   }
 
   async deleteTransaction(id: string) {
-    return this.supabase
+    console.log('Deleting transaction:', id);
+    const result = await this.supabase
       .from('transactions')
       .delete()
       .eq('id', id);
+    console.log('Delete result:', result);
+    return result;
   }
 }
 

@@ -7,11 +7,12 @@ import { Geolocation } from '@capacitor/geolocation';
 interface Transaction {
   id: string;
   amount: number;
-  category: string;
-  date: string;
   description: string;
+  date: string;
   latitude?: number;
   longitude?: number;
+  // Remove category if it doesn't exist in the database
+  // category: string;
 }
 
 @Component({
@@ -59,11 +60,6 @@ export class TransactionsPage implements OnInit {
           placeholder: 'Amount'
         },
         {
-          name: 'category',
-          type: 'text',
-          placeholder: 'Category'
-        },
-        {
           name: 'description',
           type: 'text',
           placeholder: 'Description'
@@ -73,6 +69,12 @@ export class TransactionsPage implements OnInit {
           type: 'date',
           placeholder: 'Date'
         }
+        // Remove category input if it doesn't exist in the database
+        // {
+        //   name: 'category',
+        //   type: 'text',
+        //   placeholder: 'Category'
+        // },
       ],
       buttons: [
         {
@@ -82,7 +84,12 @@ export class TransactionsPage implements OnInit {
         {
           text: 'Add',
           handler: (data) => {
+            if (!data.amount || !data.description || !data.date) {
+              this.showToast('Please fill in all fields');
+              return false;
+            }
             this.createTransaction(data);
+            return true;
           }
         }
       ]
@@ -92,18 +99,47 @@ export class TransactionsPage implements OnInit {
   }
 
   async createTransaction(transactionData: any) {
+    const loading = await this.loadingController.create({
+      message: 'Adding transaction...'
+    });
+    await loading.present();
+
     try {
-      const coordinates = await Geolocation.getCurrentPosition();
-      transactionData.latitude = coordinates.coords.latitude;
-      transactionData.longitude = coordinates.coords.longitude;
+      console.log('Transaction data before API call:', transactionData);
+      
+      let coordinates;
+      try {
+        coordinates = await Geolocation.getCurrentPosition();
+        transactionData.latitude = coordinates.coords.latitude;
+        transactionData.longitude = coordinates.coords.longitude;
+      } catch (geoError) {
+        console.warn('Geolocation error:', geoError);
+        // Proceed without coordinates if geolocation fails
+      }
+
+      console.log('Transaction data with coordinates:', transactionData);
 
       const { data, error } = await this.supabaseService.addTransaction(transactionData);
-      if (error) throw error;
-      this.transactions.unshift(data[0]);
-      this.showToast('Transaction added successfully');
+      
+      console.log('API response:', { data, error });
+
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      if (data && data.length > 0) {
+        console.log('New transaction:', data[0]);
+        this.transactions.unshift(data[0]);
+        this.showToast('Transaction added successfully');
+      } else {
+        throw new Error('No data returned from Supabase');
+      }
     } catch (error) {
       console.error('Error adding transaction:', error);
-      this.showToast('Failed to add transaction');
+      this.showToast('Failed to add transaction: ' + ((error as Error).message || 'Unknown error'));
+    } finally {
+      loading.dismiss();
     }
   }
 
@@ -116,7 +152,6 @@ export class TransactionsPage implements OnInit {
       header: 'Edit Transaction',
       inputs: [
         { name: 'amount', type: 'number', placeholder: 'Amount', value: transaction.amount },
-        { name: 'category', type: 'text', placeholder: 'Category', value: transaction.category },
         { name: 'description', type: 'text', placeholder: 'Description', value: transaction.description },
         { name: 'date', type: 'date', placeholder: 'Date', value: transaction.date },
       ],

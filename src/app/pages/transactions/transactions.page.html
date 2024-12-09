@@ -9,8 +9,7 @@
     <ion-item-sliding *ngFor="let transaction of transactions">
       <ion-item button (click)="viewTransactionDetail(transaction)">
         <ion-label>
-          <h2>{{ transaction.category }}</h2>
-          <p>{{ transaction.description }}</p>
+          <h2>{{ transaction.description }}</h2>
           <p>{{ transaction.date | date:'mediumDate' }}</p>
         </ion-label>
         <ion-note slot="end" [color]="transaction.amount >= 0 ? 'success' : 'danger'">
