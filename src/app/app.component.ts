@@ -22,20 +22,15 @@ export class AppComponent {
     await this.platform.ready();
     
     // Initialize dark mode
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-    this.toggleDarkTheme(prefersDark.matches);
-    prefersDark.addListener((mediaQuery) => this.toggleDarkTheme(mediaQuery.matches));
+    const isDark = this.themeService.isDarkMode();
+    this.themeService.setDarkMode(isDark);
+    
+    this.themeService.getDarkModeObservable().subscribe(isDark => {
+      StatusBar.setStyle({ style: isDark ? Style.Dark : Style.Light });
+    });
 
     // Request geolocation permissions
     await this.requestGeolocationPermission();
-
-    // Set status bar style
-    await StatusBar.setStyle({ style: Style.Light });
-  }
-
-  toggleDarkTheme(shouldAdd: boolean) {
-    this.themeService.setDarkMode(shouldAdd);
-    StatusBar.setStyle({ style: shouldAdd ? Style.Dark : Style.Light });
   }
 
   async requestGeolocationPermission() {

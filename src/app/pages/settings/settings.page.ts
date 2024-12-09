@@ -1,25 +1,36 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ThemeService } from '../../services/theme.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-settings',
   templateUrl: './settings.page.html',
   styleUrls: ['./settings.page.scss'],
 })
-export class SettingsPage implements OnInit {
-  darkMode: boolean;
+export class SettingsPage implements OnInit, OnDestroy {
+  darkMode: boolean = false;
+  private darkModeSubscription?: Subscription;
 
-  constructor(private themeService: ThemeService, private changeDetectorRef: ChangeDetectorRef) {
+  constructor(private themeService: ThemeService) {
     this.darkMode = this.themeService.isDarkMode();
   }
 
   ngOnInit() {
+    this.darkModeSubscription = this.themeService.getDarkModeObservable().subscribe(
+      isDark => {
+        this.darkMode = isDark;
+      }
+    );
+  }
+
+  ngOnDestroy() {
+    if (this.darkModeSubscription) {
+      this.darkModeSubscription.unsubscribe();
+    }
   }
 
   toggleDarkMode() {
-    this.darkMode = !this.darkMode;
-    this.themeService.setDarkMode(this.darkMode);
-    this.changeDetectorRef.detectChanges();
+    this.themeService.setDarkMode(!this.darkMode);
   }
 }
 

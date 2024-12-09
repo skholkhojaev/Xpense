@@ -1,5 +1,5 @@
 ion-content {
-  --background: var(--ion-color-light);
+  --background: var(--ion-background-color);
 }
 
 ion-list {
@@ -7,7 +7,7 @@ ion-list {
 }
 
 ion-item {
-  --background: var(--ion-color-light);
+  --background: var(--ion-item-background);
   margin-bottom: 8px;
   border-radius: 8px;
   --border-radius: 8px;
