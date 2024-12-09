@@ -7,7 +7,7 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding" [style.--background]="'var(--background)'">
+<ion-content class="ion-padding">
   <ion-card *ngIf="transaction">
     <ion-card-header>
       <ion-card-title>{{ transaction.description }}</ion-card-title>
@@ -20,8 +20,10 @@
           {{ transaction.amount | currency }}
         </ion-note>
       </ion-item>
-      <div *ngIf="transaction && transaction.latitude && transaction.longitude" id="transaction-map" style="height: 300px; margin-top: 16px;"></div>
-      <p *ngIf="!(transaction && transaction.latitude && transaction.longitude)">No location data available for this transaction.</p>
+      <div id="transaction-map" class="transaction-map"></div>
+      <p *ngIf="!(transaction?.latitude && transaction?.longitude)" class="ion-text-center no-location">
+        No location data available for this transaction.
+      </p>
     </ion-card-content>
   </ion-card>
 

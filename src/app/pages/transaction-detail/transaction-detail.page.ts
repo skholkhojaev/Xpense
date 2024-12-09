@@ -11,7 +11,8 @@ import * as L from 'leaflet';
 })
 export class TransactionDetailPage implements OnInit, AfterViewInit {
   transaction: any;
-  private map!: L.Map;
+  private map: L.Map | null = null;
+  private marker: L.Marker | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -30,6 +31,7 @@ export class TransactionDetailPage implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
+    // Delay map initialization to ensure the container is available
     setTimeout(() => {
       this.initMap();
       if (this.transaction) {
@@ -45,7 +47,7 @@ export class TransactionDetailPage implements OnInit, AfterViewInit {
       this.showToast('Failed to load transaction details');
     } else if (data) {
       this.transaction = data;
-      this.updateMapMarker();
+      setTimeout(() => this.updateMapMarker(), 0);
     } else {
       this.showToast('Transaction not found');
       this.navCtrl.back();
@@ -53,35 +55,45 @@ export class TransactionDetailPage implements OnInit, AfterViewInit {
   }
 
   private initMap(): void {
-    this.map = L.map('transaction-map').setView([0, 0], 13);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(this.map);
-  }
-
-  private createCustomIcon(): L.Icon {
-    return L.icon({
-      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-      iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41]
-    });
+    const mapElement = document.getElementById('transaction-map');
+    if (mapElement && !this.map) {
+      this.map = L.map(mapElement, {
+        center: [0, 0],
+        zoom: 2,
+        layers: [
+          L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '©OpenStreetMap, ©CartoDB',
+            subdomains: 'abcd',
+            maxZoom: 19
+          })
+        ]
+      });
+    }
   }
 
   private updateMapMarker(): void {
-    if (this.transaction && this.transaction.latitude && this.transaction.longitude) {
-      this.map.setView([this.transaction.latitude, this.transaction.longitude], 13);
-      L.marker([this.transaction.latitude, this.transaction.longitude], { icon: this.createCustomIcon() })
-        .addTo(this.map)
-        .bindPopup(`${this.transaction.description}: ${this.transaction.amount.toFixed(2)}`)
-        .openPopup();
-    } else {
-      console.error('Transaction location data is missing');
-      this.map.setView([0, 0], 1); // Set a default view if no location data
+    if (this.map && this.transaction && this.transaction.latitude && this.transaction.longitude) {
+      const latLng = L.latLng(this.transaction.latitude, this.transaction.longitude);
+      
+      if (this.marker) {
+        this.marker.setLatLng(latLng);
+      } else {
+        this.marker = L.marker(latLng, {
+          icon: L.icon({
+            iconUrl: 'assets/marker-icon.png',
+            iconRetinaUrl: 'assets/marker-icon-2x.png',
+            shadowUrl: 'assets/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            tooltipAnchor: [16, -28],
+            shadowSize: [41, 41]
+          })
+        }).addTo(this.map);
+      }
+
+      this.marker.bindPopup(this.transaction.description).openPopup();
+      this.map.setView(latLng, 15); 
     }
   }
 
