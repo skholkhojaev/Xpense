@@ -2,8 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { AlertController, LoadingController, ToastController } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { SupabaseService } from '../../services/supabase.service';
-import { NotificationService } from '../../services/notification.service';
-import { Geolocation, PermissionStatus } from '@capacitor/geolocation';
+import { Geolocation } from '@capacitor/geolocation';
 
 interface Transaction {
   id: string;
@@ -22,11 +21,9 @@ interface Transaction {
 export class TransactionsPage implements OnInit {
   transactions: Transaction[] = [];
   isLoading = false;
-  spendingLimit: number | null = null;
 
   constructor(
     private supabaseService: SupabaseService,
-    private notificationService: NotificationService,
     private alertController: AlertController,
     private loadingController: LoadingController,
     private toastController: ToastController,
@@ -35,7 +32,6 @@ export class TransactionsPage implements OnInit {
 
   ngOnInit() {
     this.loadTransactions();
-    this.loadSpendingLimit();
   }
 
   async loadTransactions() {
@@ -43,8 +39,7 @@ export class TransactionsPage implements OnInit {
     try {
       const { data, error } = await this.supabaseService.getTransactions();
       if (error) throw error;
-      this.transactions = data || [];
-      this.checkMonthlyTotal();
+      this.transactions = data;
     } catch (error) {
       console.error('Error loading transactions:', error);
       this.showToast('Failed to load transactions');
@@ -53,40 +48,7 @@ export class TransactionsPage implements OnInit {
     }
   }
 
-  async loadSpendingLimit() {
-    try {
-      this.spendingLimit = await this.supabaseService.getSpendingLimit();
-      this.checkMonthlyTotal();
-    } catch (error) {
-      console.error('Error loading spending limit:', error);
-      this.showToast('Failed to load spending limit');
-    }
-  }
-
-  checkMonthlyTotal() {
-    if (this.spendingLimit !== null && this.transactions.length > 0) {
-      const currentDate = new Date();
-      const currentMonth = currentDate.getMonth();
-      const currentYear = currentDate.getFullYear();
-
-      const monthlyTotal = this.transactions
-        .filter(t => {
-          const transactionDate = new Date(t.date);
-          return transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
-        })
-        .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-
-      if (monthlyTotal > this.spendingLimit) {
-        this.notificationService.setNotification(true);
-        this.showToast(`You've exceeded your monthly spending limit of ${this.spendingLimit}!`);
-      } else {
-        this.notificationService.setNotification(false);
-      }
-    }
-  }
-
   async addTransaction() {
-    const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
     const alert = await this.alertController.create({
       header: 'Add Transaction',
       inputs: [
@@ -98,13 +60,12 @@ export class TransactionsPage implements OnInit {
         {
           name: 'description',
           type: 'text',
-          placeholder: 'Description'
+          placeholder: 'What did you buy?'
         },
         {
           name: 'date',
           type: 'date',
-          placeholder: 'Date',
-          value: today // Set default value to today
+          placeholder: 'Date'
         }
       ],
       buttons: [
@@ -113,25 +74,15 @@ export class TransactionsPage implements OnInit {
           role: 'cancel'
         },
         {
-          text: 'Add with Location',
+          text: 'Add without location',
           handler: (data) => {
-            if (!data.amount || !data.description || !data.date) {
-              this.showToast('Please fill in all fields');
-              return false;
-            }
-            this.captureLocation(data);
-            return false;
+            this.createTransaction(data);
           }
         },
         {
-          text: 'Add without Location',
+          text: 'Add with location',
           handler: (data) => {
-            if (!data.amount || !data.description || !data.date) {
-              this.showToast('Please fill in all fields');
-              return false;
-            }
-            this.createTransaction(data);
-            return true;
+            this.createTransactionWithLocation(data);
           }
         }
       ]
@@ -140,75 +91,40 @@ export class TransactionsPage implements OnInit {
     await alert.present();
   }
 
-  async captureLocation(transactionData: any) {
-    try {
-      const permissionStatus = await this.checkLocationPermission();
-      if (permissionStatus === 'granted') {
-        const coordinates = await this.getCurrentPosition();
-        transactionData.latitude = coordinates.latitude;
-        transactionData.longitude = coordinates.longitude;
-        this.createTransaction(transactionData);
-      } else {
-        this.showToast('Location permission is required to add location to the transaction.');
-      }
-    } catch (error) {
-      console.error('Error capturing location:', error);
-      this.showToast('Failed to capture location. Please try again.');
-    }
-  }
-
-  async checkLocationPermission(): Promise<PermissionStatus['location']> {
-    try {
-      const status = await Geolocation.checkPermissions();
-      if (status.location === 'prompt') {
-        const requestStatus = await Geolocation.requestPermissions();
-        return requestStatus.location;
-      }
-      return status.location;
-    } catch (error) {
-      console.error('Error checking location permission:', error);
-      return 'denied' as PermissionStatus['location'];
-    }
-  }
-
-  async getCurrentPosition(): Promise<{ latitude: number; longitude: number }> {
-    try {
-      const position = await Geolocation.getCurrentPosition({
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
-      });
-      return {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude
-      };
-    } catch (error) {
-      console.error('Error getting current position:', error);
-      throw error;
-    }
-  }
-
-  async createTransaction(transactionData: any) {
-    const loading = await this.loadingController.create({
-      message: 'Adding transaction...'
-    });
+  async createTransaction(transactionData: Partial<Transaction>) {
+    const loading = await this.loadingController.create({ message: 'Adding transaction...' });
     await loading.present();
 
     try {
       const { data, error } = await this.supabaseService.addTransaction(transactionData);
-      
       if (error) throw error;
-
-      if (data && data.length > 0) {
-        this.transactions.unshift(data[0]);
-        this.showToast('Transaction added successfully');
-        this.checkMonthlyTotal();
-      } else {
-        throw new Error('No data returned from Supabase');
-      }
+      this.transactions.unshift(data[0]);
+      await this.checkSpendingLimit(data[0].amount);
+      this.showToast('Transaction added successfully');
     } catch (error) {
       console.error('Error adding transaction:', error);
-      this.showToast('Failed to add transaction: ' + ((error as Error).message || 'Unknown error'));
+      this.showToast('Failed to add transaction');
+    } finally {
+      loading.dismiss();
+    }
+  }
+
+  async createTransactionWithLocation(transactionData: Partial<Transaction>) {
+    const loading = await this.loadingController.create({ message: 'Adding transaction with location...' });
+    await loading.present();
+
+    try {
+      const coordinates = await Geolocation.getCurrentPosition();
+      transactionData.latitude = coordinates.coords.latitude;
+      transactionData.longitude = coordinates.coords.longitude;
+
+      const { data, error } = await this.supabaseService.addTransaction(transactionData);
+      if (error) throw error;
+      this.transactions.unshift(data[0]);
+      this.showToast('Transaction added successfully with location');
+    } catch (error) {
+      console.error('Error adding transaction with location:', error);
+      this.showToast('Failed to add transaction with location');
     } finally {
       loading.dismiss();
     }
@@ -223,7 +139,7 @@ export class TransactionsPage implements OnInit {
       header: 'Edit Transaction',
       inputs: [
         { name: 'amount', type: 'number', placeholder: 'Amount', value: transaction.amount },
-        { name: 'description', type: 'text', placeholder: 'Description', value: transaction.description },
+        { name: 'description', type: 'text', placeholder: 'What did you buy?', value: transaction.description },
         { name: 'date', type: 'date', placeholder: 'Date', value: transaction.date },
       ],
       buttons: [
@@ -245,11 +161,10 @@ export class TransactionsPage implements OnInit {
       const { data, error } = await this.supabaseService.updateTransaction(id, transactionData);
       if (error) throw error;
       const index = this.transactions.findIndex(t => t.id === id);
-      if (index !== -1 && data) {
+      if (index !== -1) {
         this.transactions[index] = data[0];
       }
       this.showToast('Transaction updated successfully');
-      this.checkMonthlyTotal();
     } catch (error) {
       console.error('Error updating transaction:', error);
       this.showToast('Failed to update transaction');
@@ -282,7 +197,6 @@ export class TransactionsPage implements OnInit {
       if (error) throw error;
       this.transactions = this.transactions.filter(t => t.id !== id);
       this.showToast('Transaction deleted successfully');
-      this.checkMonthlyTotal();
     } catch (error) {
       console.error('Error deleting transaction:', error);
       this.showToast('Failed to delete transaction');
@@ -298,6 +212,25 @@ export class TransactionsPage implements OnInit {
       position: 'bottom',
     });
     await toast.present();
+  }
+
+  private async checkSpendingLimit(amount: number) {
+    const { data: settings } = await this.supabaseService.getSettings();
+    if (settings && settings.spending_limit > 0) {
+      const { data: transactions } = await this.supabaseService.getRecentTransactions();
+      const totalExpenses = transactions
+        ? transactions
+            .filter(t => t.amount < 0)
+            .reduce((sum, t) => sum + Math.abs(t.amount), 0)
+        : 0;
+
+      if (totalExpenses + Math.abs(amount) > settings.spending_limit) {
+        await this.supabaseService.addNotification({
+          message: `Your recent transaction of ${Math.abs(amount)} exceeds your spending limit of ${settings.spending_limit}.`,
+          date: new Date().toISOString()
+        });
+      }
+    }
   }
 }
 

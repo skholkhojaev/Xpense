@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Storage } from '@capacitor/storage';
+import { Preferences } from '@capacitor/preferences';
 
 @Injectable({
   providedIn: 'root'
@@ -10,19 +10,18 @@ export class OfflineStorageService {
   async saveTransaction(transaction: any) {
     const transactions = await this.getOfflineTransactions();
     transactions.push(transaction);
-    await Storage.set({
+    await Preferences.set({
       key: 'offlineTransactions',
       value: JSON.stringify(transactions)
     });
   }
 
   async getOfflineTransactions() {
-    const { value } = await Storage.get({ key: 'offlineTransactions' });
+    const { value } = await Preferences.get({ key: 'offlineTransactions' });
     return value ? JSON.parse(value) : [];
   }
 
   async clearOfflineTransactions() {
-    await Storage.remove({ key: 'offlineTransactions' });
+    await Preferences.remove({ key: 'offlineTransactions' });
   }
 }
-

@@ -2,6 +2,13 @@ import { Injectable } from '@angular/core';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { environment } from '../../environments/environment';
 
+interface SpendingLimit {
+  id: number;
+  monthly_limit: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -13,94 +20,145 @@ export class SupabaseService {
   }
 
   async getTransactions() {
-    const { data, error } = await this.supabase
+    return this.supabase
       .from('transactions')
       .select('*')
-      .order('created_at', { ascending: false });
-    return { data, error };
+      .order('date', { ascending: false });
+  }
+
+  async getRecentTransactions() {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    return this.supabase
+      .from('transactions')
+      .select('*')
+      .gte('date', thirtyDaysAgo.toISOString())
+      .order('date', { ascending: false });
   }
 
   async getTransactionById(id: string) {
-    const { data, error } = await this.supabase
+    return this.supabase
       .from('transactions')
       .select('*')
       .eq('id', id)
       .single();
-    return { data, error };
   }
 
   async addTransaction(transaction: any) {
-    const { data, error } = await this.supabase
+    return this.supabase
       .from('transactions')
       .insert({
+        ...transaction,
         amount: parseFloat(transaction.amount),
-        description: transaction.description,
         date: new Date(transaction.date).toISOString(),
         latitude: transaction.latitude,
         longitude: transaction.longitude
       })
       .select();
-    return { data, error };
   }
 
   async updateTransaction(id: string, transaction: any) {
-    const { data, error } = await this.supabase
+    return this.supabase
       .from('transactions')
       .update(transaction)
       .eq('id', id)
       .select();
-    return { data, error };
   }
 
   async deleteTransaction(id: string) {
-    const { error } = await this.supabase
+    return this.supabase
       .from('transactions')
       .delete()
       .eq('id', id);
-    return { error };
   }
 
-  async setSpendingLimit(limit: number) {
+  async getSettings() {
     try {
-      const { data, error } = await this.supabase
+      let { data, error } = await this.supabase
         .from('spending_limits')
-        .upsert({ id: 1, monthly_limit: limit })
-        .select();
-      
-      if (error) {
-        console.error('Error setting spending limit:', error);
-        throw new Error(`Failed to set spending limit: ${error.message}`);
-      }
-      
-      return data;
-    } catch (error) {
-      console.error('Error in setSpendingLimit:', error);
-      throw error;
-    }
-  }
-
-  async getSpendingLimit() {
-    try {
-      const { data, error } = await this.supabase
-        .from('spending_limits')
-        .select('monthly_limit')
-        .eq('id', 1)
+        .select('*')
         .single();
-      
+
       if (error) {
-        if (error.code === 'PGRST116') {
-          // No data found, return default limit
-          return 0;
-        }
-        console.error('Error getting spending limit:', error);
-        throw new Error(`Failed to get spending limit: ${error.message}`);
+        console.error('Error fetching spending limit:', error);
+        return this.createDefaultSettings();
       }
-      
-      return data?.monthly_limit || 0;
+
+      return { data: { spending_limit: data.monthly_limit }, error: null };
     } catch (error) {
-      console.error('Error in getSpendingLimit:', error);
-      throw error;
+      console.error('Unexpected error in getSettings:', error);
+      return { data: null, error };
     }
+  }
+
+  private async createDefaultSettings() {
+    const defaultSettings: SpendingLimit = {
+      id: 1,
+      monthly_limit: 0
+    };
+
+    try {
+      const { data, error } = await this.supabase
+        .from('spending_limits')
+        .upsert(defaultSettings)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating default spending limit:', error);
+        return { data: null, error };
+      }
+
+      return { data: { spending_limit: data.monthly_limit }, error: null };
+    } catch (error) {
+      console.error('Unexpected error in createDefaultSettings:', error);
+      return { data: null, error };
+    }
+  }
+
+  async updateSettings(settings: { spending_limit: number }) {
+    try {
+      const { data, error } = await this.supabase
+        .from('spending_limits')
+        .upsert({
+          id: 1,
+          monthly_limit: settings.spending_limit
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating spending limit:', error);
+        return { data: null, error };
+      }
+
+      return { data: { spending_limit: data.monthly_limit }, error: null };
+    } catch (error) {
+      console.error('Unexpected error in updateSettings:', error);
+      return { data: null, error };
+    }
+  }
+
+  async addNotification(notification: { message: string, date: string }) {
+    return this.supabase
+      .from('notifications')
+      .insert(notification)
+      .select();
+  }
+
+  async getNotifications() {
+    return this.supabase
+      .from('notifications')
+      .select('*')
+      .order('date', { ascending: false });
+  }
+
+  async clearNotifications() {
+    return this.supabase
+      .from('notifications')
+      .delete()
+      .gte('id', 0);
   }
 }
 

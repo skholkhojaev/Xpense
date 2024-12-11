@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { NotificationService } from '../../services/notification.service';
+import { SupabaseService } from '../../services/supabase.service';
 
 @Component({
   selector: 'app-notifications',
@@ -7,21 +7,30 @@ import { NotificationService } from '../../services/notification.service';
   styleUrls: ['./notifications.page.scss'],
 })
 export class NotificationsPage implements OnInit {
-  notifications = [
-    {
-      title: 'Transaction Reminder',
-      message: 'Dont forget to log your expenses for today.',
-      hasNotification: false
-    },
-    {
-      title: 'Spending Limit Reached',
-      message: 'Youve reached your spending limit for the month.',
-      hasNotification: true
+  notifications: any[] = [];
+
+  constructor(private supabaseService: SupabaseService) { }
+
+  async ngOnInit() {
+    await this.loadNotifications();
+  }
+
+  async loadNotifications() {
+    const { data, error } = await this.supabaseService.getNotifications();
+    if (error) {
+      console.error('Error loading notifications:', error);
+    } else {
+      this.notifications = data;
     }
-  ];
+  }
 
-  constructor(private notificationService: NotificationService) {}
-
-  ngOnInit() {}
+  async clearNotifications() {
+    const { error } = await this.supabaseService.clearNotifications();
+    if (error) {
+      console.error('Error clearing notifications:', error);
+    } else {
+      this.notifications = [];
+    }
+  }
 }
 

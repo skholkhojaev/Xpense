@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { SettingsPageRoutingModule } from './settings-routing.module';
 import { SettingsPage } from './settings.page';
+import { ThemeService } from '../../services/theme.service';
 
 @NgModule({
   imports: [
@@ -12,7 +13,8 @@ import { SettingsPage } from './settings.page';
     IonicModule,
     SettingsPageRoutingModule
   ],
-  declarations: [SettingsPage]
+  declarations: [SettingsPage],
+  providers: [ThemeService]
 })
 export class SettingsPageModule {}
 

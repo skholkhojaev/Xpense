@@ -2,18 +2,15 @@
   <ion-tab-bar slot="bottom">
     <ion-tab-button tab="transactions">
       <ion-icon name="cash-outline"></ion-icon>
-      <ion-label>Transactions</ion-label>
     </ion-tab-button>
 
-    <ion-tab-button tab="notifications" class="notification-tab">
+    <ion-tab-button tab="notifications">
       <ion-icon name="notifications-outline"></ion-icon>
-      <ion-label>Notifications</ion-label>
-      <div *ngIf="hasNotification" class="tab-notification-dot"></div>
+      <ion-badge *ngIf="hasNotifications" color="danger"></ion-badge>
     </ion-tab-button>
 
     <ion-tab-button tab="settings">
       <ion-icon name="settings-outline"></ion-icon>
-      <ion-label>Settings</ion-label>
     </ion-tab-button>
   </ion-tab-bar>
 </ion-tabs>

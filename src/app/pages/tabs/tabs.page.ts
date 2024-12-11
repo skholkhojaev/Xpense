@@ -1,26 +1,27 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { NotificationService } from '../../services/notification.service';
-import { Subscription } from 'rxjs';
+import { Component, OnInit } from '@angular/core';
+import { SupabaseService } from '../../services/supabase.service';
 
 @Component({
   selector: 'app-tabs',
   templateUrl: 'tabs.page.html',
   styleUrls: ['tabs.page.scss']
 })
-export class TabsPage implements OnInit, OnDestroy {
-  hasNotification = false;
-  private notificationSubscription: Subscription | undefined;
+export class TabsPage implements OnInit {
+  hasNotifications: boolean = false;
 
-  constructor(private notificationService: NotificationService) {}
+  constructor(private supabaseService: SupabaseService) {}
 
-  ngOnInit() {
-    this.notificationSubscription = this.notificationService.getNotification().subscribe(hasNotification => {
-      this.hasNotification = hasNotification;
-    });
+  async ngOnInit() {
+    await this.checkNotifications();
   }
 
-  ngOnDestroy() {
-    this.notificationSubscription?.unsubscribe();
+  async checkNotifications() {
+    try {
+      const { data: notifications } = await this.supabaseService.getNotifications();
+      this.hasNotifications = !!notifications && notifications.length > 0;
+    } catch (error) {
+      console.error('Error checking notifications:', error);
+    }
   }
 }
 

@@ -4,19 +4,31 @@ import { RouteReuseStrategy } from '@angular/router';
 import { IonicModule, IonicRouteStrategy } from '@ionic/angular';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import '../leaflet-fix';
+import { SupabaseService } from './services/supabase.service';
+
+import { addIcons } from 'ionicons';
+import { cashOutline, notificationsOutline, settingsOutline } from 'ionicons/icons';
 
 @NgModule({
   declarations: [AppComponent],
   imports: [
-    BrowserModule,
-    IonicModule.forRoot(),
+    BrowserModule, 
+    IonicModule.forRoot(), 
     AppRoutingModule
   ],
   providers: [
-    { provide: RouteReuseStrategy, useClass: IonicRouteStrategy }
+    { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
+    SupabaseService
   ],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
 })
-export class AppModule {}
+export class AppModule {
+  constructor() {
+    addIcons({
+      'cash-outline': cashOutline,
+      'notifications-outline': notificationsOutline,
+      'settings-outline': settingsOutline
+    });
+  }
+}
 

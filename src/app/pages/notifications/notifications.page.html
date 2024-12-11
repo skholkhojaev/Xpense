@@ -1,18 +1,26 @@
 <ion-header>
   <ion-toolbar>
     <ion-title>Notifications</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="clearNotifications()" *ngIf="notifications.length > 0">
+        Clear All
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
 <ion-content class="ion-padding">
-  <ion-list>
-    <ion-item *ngFor="let notification of notifications" class="notification-item">
+  <ion-list *ngIf="notifications.length > 0">
+    <ion-item *ngFor="let notification of notifications">
       <ion-label>
-        <h2>{{ notification.title }}</h2>
-        <p>{{ notification.message }}</p>
+        <h2>{{ notification.message }}</h2>
+        <p>{{ notification.date | date:'medium' }}</p>
       </ion-label>
-      <div *ngIf="notification.hasNotification" class="notification-dot"></div>
     </ion-item>
   </ion-list>
+
+  <div *ngIf="notifications.length === 0" class="ion-text-center">
+    <p>No notifications</p>
+  </div>
 </ion-content>
 

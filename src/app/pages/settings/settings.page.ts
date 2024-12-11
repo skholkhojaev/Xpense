@@ -39,21 +39,25 @@ export class SettingsPage implements OnInit, OnDestroy {
   }
 
   toggleDarkMode() {
-    this.themeService.setDarkMode(!this.darkMode);
+    this.themeService.setDarkMode(this.darkMode);
   }
 
   async loadSpendingLimit() {
     try {
-      this.spendingLimit = await this.supabaseService.getSpendingLimit();
+      const { data: settings, error } = await this.supabaseService.getSettings();
+      if (error) {
+        throw error;
+      }
+      this.spendingLimit = settings?.spending_limit || null;
     } catch (error) {
       console.error('Error loading spending limit:', error);
       this.showToast('Failed to load spending limit. Please try again later.');
     }
   }
 
-  async setSpendingLimit() {
+  async updateSpendingLimit() {
     const alert = await this.alertController.create({
-      header: 'Set Monthly Spending Limit',
+      header: 'Update Monthly Spending Limit',
       inputs: [
         {
           name: 'limit',
@@ -72,11 +76,11 @@ export class SettingsPage implements OnInit, OnDestroy {
           handler: async (data) => {
             if (data.limit && !isNaN(data.limit)) {
               try {
-                await this.supabaseService.setSpendingLimit(parseFloat(data.limit));
+                await this.supabaseService.updateSettings({ spending_limit: parseFloat(data.limit) });
                 this.spendingLimit = parseFloat(data.limit);
                 this.showToast('Spending limit updated successfully');
               } catch (error) {
-                console.error('Error setting spending limit:', error);
+                console.error('Error updating spending limit:', error);
                 this.showToast('Failed to update spending limit. Please try again later.');
               }
             } else {
