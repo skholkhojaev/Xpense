@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { environment } from '../../environments/environment';
+import { NotificationService } from './notification.service';
 
 interface SpendingLimit {
   id: number;
@@ -15,7 +16,7 @@ interface SpendingLimit {
 export class SupabaseService {
   private supabase: SupabaseClient;
 
-  constructor() {
+  constructor(private notificationService: NotificationService) {
     this.supabase = createClient(environment.supabaseUrl, environment.supabaseKey);
   }
 
@@ -159,6 +160,35 @@ export class SupabaseService {
       .from('notifications')
       .delete()
       .gte('id', 0);
+  }
+
+  async checkSpendingLimit(amount: number) {
+    const { data: settings, error } = await this.getSettings();
+    if (error) {
+      console.error('Error fetching settings:', error);
+      return;
+    }
+
+    if (settings && settings.spending_limit > 0) {
+      const { data: transactions, error: transactionError } = await this.getRecentTransactions();
+      if (transactionError) {
+        console.error('Error fetching transactions:', transactionError);
+        return;
+      }
+
+      const totalExpenses = transactions
+        ? transactions
+            .filter(t => t.amount < 0)
+            .reduce((sum, t) => sum + Math.abs(t.amount), 0)
+        : 0;
+
+      if (totalExpenses + Math.abs(amount) > settings.spending_limit) {
+        await this.notificationService.scheduleNotification(
+          'Spending Limit Exceeded',
+          `Your recent transaction of ${Math.abs(amount)} exceeds your spending limit of ${settings.spending_limit}.`
+        );
+      }
+    }
   }
 }
 

@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { SupabaseService } from '../../services/supabase.service';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-tabs',
@@ -8,8 +9,12 @@ import { SupabaseService } from '../../services/supabase.service';
 })
 export class TabsPage implements OnInit {
   hasNotifications: boolean = false;
+  hasUnreadNotifications: boolean = false;
 
-  constructor(private supabaseService: SupabaseService) {}
+  constructor(
+    private supabaseService: SupabaseService,
+    private notificationService: NotificationService
+  ) {}
 
   async ngOnInit() {
     await this.checkNotifications();
@@ -17,8 +22,7 @@ export class TabsPage implements OnInit {
 
   async checkNotifications() {
     try {
-      const { data: notifications } = await this.supabaseService.getNotifications();
-      this.hasNotifications = !!notifications && notifications.length > 0;
+      this.hasUnreadNotifications = await this.notificationService.hasUnreadNotifications();
     } catch (error) {
       console.error('Error checking notifications:', error);
     }

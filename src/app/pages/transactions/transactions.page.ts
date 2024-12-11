@@ -49,6 +49,7 @@ export class TransactionsPage implements OnInit {
   }
 
   async addTransaction() {
+    const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
     const alert = await this.alertController.create({
       header: 'Add Transaction',
       inputs: [
@@ -65,6 +66,7 @@ export class TransactionsPage implements OnInit {
         {
           name: 'date',
           type: 'date',
+          value: today, // Set default value to today
           placeholder: 'Date'
         }
       ],
@@ -99,7 +101,7 @@ export class TransactionsPage implements OnInit {
       const { data, error } = await this.supabaseService.addTransaction(transactionData);
       if (error) throw error;
       this.transactions.unshift(data[0]);
-      await this.checkSpendingLimit(data[0].amount);
+      await this.supabaseService.checkSpendingLimit(data[0].amount);
       this.showToast('Transaction added successfully');
     } catch (error) {
       console.error('Error adding transaction:', error);
@@ -212,25 +214,6 @@ export class TransactionsPage implements OnInit {
       position: 'bottom',
     });
     await toast.present();
-  }
-
-  private async checkSpendingLimit(amount: number) {
-    const { data: settings } = await this.supabaseService.getSettings();
-    if (settings && settings.spending_limit > 0) {
-      const { data: transactions } = await this.supabaseService.getRecentTransactions();
-      const totalExpenses = transactions
-        ? transactions
-            .filter(t => t.amount < 0)
-            .reduce((sum, t) => sum + Math.abs(t.amount), 0)
-        : 0;
-
-      if (totalExpenses + Math.abs(amount) > settings.spending_limit) {
-        await this.supabaseService.addNotification({
-          message: `Your recent transaction of ${Math.abs(amount)} exceeds your spending limit of ${settings.spending_limit}.`,
-          date: new Date().toISOString()
-        });
-      }
-    }
   }
 }
 
