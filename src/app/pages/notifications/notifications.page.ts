@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { SupabaseService } from '../../services/supabase.service';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-notifications',
@@ -9,28 +9,19 @@ import { SupabaseService } from '../../services/supabase.service';
 export class NotificationsPage implements OnInit {
   notifications: any[] = [];
 
-  constructor(private supabaseService: SupabaseService) { }
+  constructor(private notificationService: NotificationService) { }
 
   async ngOnInit() {
     await this.loadNotifications();
   }
 
   async loadNotifications() {
-    const { data, error } = await this.supabaseService.getNotifications();
-    if (error) {
-      console.error('Error loading notifications:', error);
-    } else {
-      this.notifications = data;
-    }
+    this.notifications = await this.notificationService.getStoredNotifications();
   }
 
   async clearNotifications() {
-    const { error } = await this.supabaseService.clearNotifications();
-    if (error) {
-      console.error('Error clearing notifications:', error);
-    } else {
-      this.notifications = [];
-    }
+    await this.notificationService.clearNotifications();
+    this.notifications = [];
   }
 }
 

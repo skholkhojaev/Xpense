@@ -13,7 +13,8 @@
   <ion-list *ngIf="notifications.length > 0">
     <ion-item *ngFor="let notification of notifications">
       <ion-label>
-        <h2>{{ notification.message }}</h2>
+        <h2>{{ notification.title }}</h2>
+        <p>{{ notification.body }}</p>
         <p>{{ notification.date | date:'medium' }}</p>
       </ion-label>
     </ion-item>
