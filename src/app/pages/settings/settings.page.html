@@ -12,9 +12,9 @@
   </ion-header>
 
   <ion-list>
-    <ion-item>
+    <ion-item lines="full" class="dark-mode-item">
       <ion-label>Dark Mode</ion-label>
-      <ion-toggle 
+      <ion-toggle slot="end"
         [(ngModel)]="darkMode" 
         (ionChange)="toggleDarkMode()"
         [checked]="darkMode">
