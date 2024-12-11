@@ -5,9 +5,10 @@ import { IonicModule, IonicRouteStrategy } from '@ionic/angular';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { SupabaseService } from './services/supabase.service';
+import { NotificationService } from './services/notification.service';
 
 import { addIcons } from 'ionicons';
-import { cashOutline, notificationsOutline, settingsOutline } from 'ionicons/icons';
+import { cashOutline, notificationsOutline, settingsOutline, add } from 'ionicons/icons';
 
 @NgModule({
   declarations: [AppComponent],
@@ -18,7 +19,8 @@ import { cashOutline, notificationsOutline, settingsOutline } from 'ionicons/ico
   ],
   providers: [
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
-    SupabaseService
+    SupabaseService,
+    NotificationService
   ],
   bootstrap: [AppComponent],
 })
@@ -27,7 +29,8 @@ export class AppModule {
     addIcons({
       'cash-outline': cashOutline,
       'notifications-outline': notificationsOutline,
-      'settings-outline': settingsOutline
+      'settings-outline': settingsOutline,
+      'add': add
     });
   }
 }

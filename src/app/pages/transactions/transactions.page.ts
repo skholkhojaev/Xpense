@@ -9,6 +9,7 @@ interface Transaction {
   amount: number;
   description: string;
   date: string;
+  category?: string; // Added category as an optional property
   latitude?: number;
   longitude?: number;
 }
@@ -49,7 +50,7 @@ export class TransactionsPage implements OnInit {
   }
 
   async addTransaction() {
-    const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+    const today = new Date().toISOString().split('T')[0];
     const alert = await this.alertController.create({
       header: 'Add Transaction',
       inputs: [
@@ -64,9 +65,14 @@ export class TransactionsPage implements OnInit {
           placeholder: 'What did you buy?'
         },
         {
+          name: 'category',
+          type: 'text',
+          placeholder: 'Category'
+        },
+        {
           name: 'date',
           type: 'date',
-          value: today, // Set default value to today
+          value: today,
           placeholder: 'Date'
         }
       ],
@@ -142,6 +148,7 @@ export class TransactionsPage implements OnInit {
       inputs: [
         { name: 'amount', type: 'number', placeholder: 'Amount', value: transaction.amount },
         { name: 'description', type: 'text', placeholder: 'What did you buy?', value: transaction.description },
+        { name: 'category', type: 'text', placeholder: 'Category', value: transaction.category },
         { name: 'date', type: 'date', placeholder: 'Date', value: transaction.date },
       ],
       buttons: [
