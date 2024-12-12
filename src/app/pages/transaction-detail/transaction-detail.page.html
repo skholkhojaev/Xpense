@@ -1,7 +1,7 @@
 <ion-header>
   <ion-toolbar>
     <ion-buttons slot="start">
-      <ion-back-button defaultHref="/tabs/transactions"></ion-back-button>
+      <ion-back-button defaultHref="/transactions"></ion-back-button>
     </ion-buttons>
     <ion-title>Transaction Detail</ion-title>
   </ion-toolbar>
@@ -20,22 +20,19 @@
           {{ transaction.amount | currency }}
         </ion-note>
       </ion-item>
-      <div id="transaction-map" class="transaction-map"></div>
-      <p *ngIf="!(transaction?.latitude && transaction?.longitude)" class="ion-text-center no-location">
-        No location data available for this transaction.
-      </p>
+      <ion-item *ngIf="transaction.latitude && transaction.longitude">
+        <ion-label>Location</ion-label>
+        <ion-text slot="end">{{ transaction.latitude }}, {{ transaction.longitude }}</ion-text>
+      </ion-item>
     </ion-card-content>
   </ion-card>
 
-  <div class="ion-text-center ion-padding-top">
-    <ion-button expand="block" (click)="editTransaction()" color="primary">
-      <ion-icon name="create" slot="start"></ion-icon>
-      Edit Transaction
-    </ion-button>
-    <ion-button expand="block" (click)="deleteTransaction()" color="danger" class="ion-margin-top">
-      <ion-icon name="trash" slot="start"></ion-icon>
-      Delete Transaction
-    </ion-button>
+  <div *ngIf="transaction?.latitude && transaction?.longitude" class="map-container">
+    <h2>Transaction Location</h2>
+    <app-map 
+      [latitude]="transaction.latitude" 
+      [longitude]="transaction.longitude">
+    </app-map>
   </div>
 </ion-content>
 

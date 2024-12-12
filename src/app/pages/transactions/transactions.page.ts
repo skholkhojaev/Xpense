@@ -9,7 +9,6 @@ interface Transaction {
   amount: number;
   description: string;
   date: string;
-  category?: string; // Added category as an optional property
   latitude?: number;
   longitude?: number;
 }
@@ -63,11 +62,6 @@ export class TransactionsPage implements OnInit {
           name: 'description',
           type: 'text',
           placeholder: 'What did you buy?'
-        },
-        {
-          name: 'category',
-          type: 'text',
-          placeholder: 'Category'
         },
         {
           name: 'date',
@@ -148,7 +142,6 @@ export class TransactionsPage implements OnInit {
       inputs: [
         { name: 'amount', type: 'number', placeholder: 'Amount', value: transaction.amount },
         { name: 'description', type: 'text', placeholder: 'What did you buy?', value: transaction.description },
-        { name: 'category', type: 'text', placeholder: 'Category', value: transaction.category },
         { name: 'date', type: 'date', placeholder: 'Date', value: transaction.date },
       ],
       buttons: [

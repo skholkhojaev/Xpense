@@ -17,9 +17,10 @@
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
-          "options": { 
-            "allowedCommonJsDependencies":[
-              "ws"
+          "options": {
+            "allowedCommonJsDependencies": [
+              "ws",
+              "leaflet"
             ],
             "outputPath": "www",
             "index": "src/index.html",
@@ -34,7 +35,11 @@
                 "output": "assets"
               }
             ],
-            "styles": ["src/global.scss", "src/theme/variables.scss"],
+            "styles": [
+              "src/global.scss",
+              "src/theme/variables.scss",
+              "node_modules/leaflet/dist/leaflet.css"
+            ],
             "scripts": []
           },
           "configurations": {
@@ -109,7 +114,11 @@
                 "output": "assets"
               }
             ],
-            "styles": ["src/global.scss", "src/theme/variables.scss"],
+            "styles": [
+              "src/global.scss",
+              "src/theme/variables.scss",
+              "node_modules/leaflet/dist/leaflet.css"
+            ],
             "scripts": []
           },
           "configurations": {
@@ -149,3 +158,4 @@
     }
   }
 }
+

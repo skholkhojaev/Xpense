@@ -3,7 +3,7 @@ ion-content {
 }
 
 ion-card {
-  margin: 16px;
+  margin: 16px 0;
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
@@ -36,30 +36,13 @@ ion-note {
   font-weight: bold;
 }
 
-.transaction-map {
-  width: 100%;
-  height: 300px;
-  margin-top: 16px;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.no-location {
-  margin-top: 16px;
-  font-style: italic;
-  color: var(--ion-color-medium);
-}
-
-:host-context(.dark) {
-  --background: #121212;
-
-  ion-content {
-    --background: #121212;
-  }
-
-  ion-card {
-    --background: #1e1e1e;
+.map-container {
+  margin: 16px 0;
+  
+  h2 {
+    margin-bottom: 16px;
+    font-size: 1.2em;
+    font-weight: 500;
   }
 }
 
