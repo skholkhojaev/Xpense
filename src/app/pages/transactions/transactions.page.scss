@@ -1,5 +1,5 @@
 ion-content {
-  --background: var(--ion-color-light);
+  --background: var(--ion-background-color);
 }
 
 ion-list {
@@ -7,7 +7,7 @@ ion-list {
 }
 
 ion-item {
-  --background: var(--ion-color-light);
+  --background: var(--ion-item-background);
   margin-bottom: 8px;
   border-radius: 8px;
   --border-radius: 8px;
@@ -25,5 +25,15 @@ ion-fab-button {
 ion-fab-button ion-icon {
   font-size: 24px;
   color: #ffffff;
+}
+
+:host-context(.dark) {
+  ion-content {
+    --background: var(--ion-background-color-dark, #121212);
+  }
+
+  ion-item {
+    --background: var(--ion-item-background-dark, #1e1e1e);
+  }
 }
 
