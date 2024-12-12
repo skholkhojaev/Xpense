@@ -162,7 +162,8 @@ export class SupabaseService {
       .gte('id', 0);
   }
 
-  async checkSpendingLimit(amount: number) {
+  async checkSpendingLimit(newTransactionAmount: number) {
+    console.log('Checking spending limit for new transaction amount:', newTransactionAmount);
     const { data: settings, error } = await this.getSettings();
     if (error) {
       console.error('Error fetching settings:', error);
@@ -170,24 +171,41 @@ export class SupabaseService {
     }
 
     if (settings && settings.spending_limit > 0) {
-      const { data: transactions, error: transactionError } = await this.getRecentTransactions();
+      const currentDate = new Date();
+      const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+
+      const { data: transactions, error: transactionError } = await this.supabase
+        .from('transactions')
+        .select('amount')
+        .gte('date', firstDayOfMonth.toISOString())
+        .lte('date', currentDate.toISOString());
+
       if (transactionError) {
         console.error('Error fetching transactions:', transactionError);
         return;
       }
 
-      const totalExpenses = transactions
-        ? transactions
-            .filter(t => t.amount < 0)
-            .reduce((sum, t) => sum + Math.abs(t.amount), 0)
-        : 0;
+      const totalSpending = transactions
+        .filter(t => t.amount < 0)
+        .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
-      if (totalExpenses + Math.abs(amount) > settings.spending_limit) {
-        await this.notificationService.scheduleNotification(
-          'Spending Limit Exceeded',
-          `Your recent transaction of ${Math.abs(amount)} exceeds your spending limit of ${settings.spending_limit}.`
+      const newTotalSpending = totalSpending + Math.abs(newTransactionAmount);
+
+      console.log('Total spending this month:', totalSpending);
+      console.log('New total spending:', newTotalSpending);
+      console.log('Spending limit:', settings.spending_limit);
+
+      if (newTotalSpending > settings.spending_limit) {
+        console.log('Spending limit exceeded, scheduling notification');
+        await this.notificationService.scheduleLocalNotification(
+          'Monthly Spending Limit Exceeded',
+          `Your total spending of $${newTotalSpending.toFixed(2)} this month exceeds your limit of $${settings.spending_limit.toFixed(2)}.`
         );
+      } else {
+        console.log('Spending limit not exceeded');
       }
+    } else {
+      console.log('No spending limit set or spending limit is 0');
     }
   }
 }

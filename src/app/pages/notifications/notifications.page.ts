@@ -15,8 +15,13 @@ export class NotificationsPage implements OnInit {
     await this.loadNotifications();
   }
 
+  async ionViewWillEnter() {
+    await this.loadNotifications();
+  }
+
   async loadNotifications() {
     this.notifications = await this.notificationService.getStoredNotifications();
+    console.log('Loaded notifications:', this.notifications);
   }
 
   async clearNotifications() {

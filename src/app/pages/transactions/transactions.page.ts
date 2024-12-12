@@ -123,10 +123,15 @@ export class TransactionsPage implements OnInit {
       const { data, error } = await this.supabaseService.addTransaction(transactionData);
       if (error) throw error;
       this.transactions.unshift(data[0]);
+      await this.supabaseService.checkSpendingLimit(data[0].amount);
       this.showToast('Transaction added successfully with location');
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error adding transaction with location:', error);
-      this.showToast('Failed to add transaction with location');
+      if (error instanceof Error && error.message.includes('permission')) {
+        this.showToast('Location permission denied. Please enable location permissions in your device settings.');
+      } else {
+        this.showToast('Failed to add transaction with location');
+      }
     } finally {
       loading.dismiss();
     }

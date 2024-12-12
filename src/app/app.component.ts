@@ -1,7 +1,9 @@
 import { Component } from '@angular/core';
 import { Platform } from '@ionic/angular';
-import { StatusBar, Style } from '@capacitor/status-bar';
 import { Geolocation } from '@capacitor/geolocation';
+import { StatusBar, Style } from '@capacitor/status-bar';
+import { SplashScreen } from '@capacitor/splash-screen';
+import { NotificationService } from './services/notification.service';
 
 @Component({
   selector: 'app-root',
@@ -9,7 +11,10 @@ import { Geolocation } from '@capacitor/geolocation';
   styleUrls: ['app.component.scss'],
 })
 export class AppComponent {
-  constructor(private platform: Platform) {
+  constructor(
+    private platform: Platform,
+    private notificationService: NotificationService
+  ) {
     this.initializeApp();
   }
 
@@ -19,6 +24,8 @@ export class AppComponent {
     this.initializeDarkMode();
     await this.requestGeolocationPermission();
     await StatusBar.setStyle({ style: Style.Light });
+    await SplashScreen.hide();
+    await this.notificationService.initializeNotifications();
   }
 
   initializeDarkMode() {
