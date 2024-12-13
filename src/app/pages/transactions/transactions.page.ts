@@ -83,8 +83,15 @@ export class TransactionsPage implements OnInit {
         },
         {
           text: 'Add with location',
-          handler: (data) => {
-            this.createTransactionWithLocation(data);
+          handler: async (data) => {
+            try {
+              await this.createTransactionWithLocation(data);
+              return true;
+            } catch (error) {
+              console.error('Error handling location:', error);
+              this.showToast('Error accessing location services');
+              return false;
+            }
           }
         }
       ]
@@ -116,7 +123,25 @@ export class TransactionsPage implements OnInit {
     await loading.present();
 
     try {
-      const coordinates = await Geolocation.getCurrentPosition();
+      // Check and request permissions
+      const permissionStatus = await Geolocation.checkPermissions();
+      console.log('Permission status:', permissionStatus);
+
+      if (permissionStatus.location !== 'granted') {
+        const requestResult = await Geolocation.requestPermissions();
+        console.log('Permission request result:', requestResult);
+        if (requestResult.location !== 'granted') {
+          throw new Error('Location permission not granted');
+        }
+      }
+
+      const coordinates = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 10000
+      });
+      
+      console.log('Coordinates:', coordinates);
+
       transactionData.latitude = coordinates.coords.latitude;
       transactionData.longitude = coordinates.coords.longitude;
 
@@ -125,12 +150,14 @@ export class TransactionsPage implements OnInit {
       this.transactions.unshift(data[0]);
       await this.supabaseService.checkSpendingLimit(data[0].amount);
       this.showToast('Transaction added successfully with location');
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error adding transaction with location:', error);
-      if (error instanceof Error && error.message.includes('permission')) {
-        this.showToast('Location permission denied. Please enable location permissions in your device settings.');
-      } else {
-        this.showToast('Failed to add transaction with location');
+      if (error instanceof Error) {
+        if (error.message.includes('permission')) {
+          this.showToast('Location permission denied. Please enable location permissions in your device settings.');
+        } else {
+          this.showToast('Failed to add transaction with location: ' + error.message);
+        }
       }
     } finally {
       loading.dismiss();

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { environment } from '../../environments/environment';
 import { NotificationService } from './notification.service';
+import { Toast } from '@capacitor/toast';
 
 interface SpendingLimit {
   id: number;
@@ -197,10 +198,19 @@ export class SupabaseService {
 
       if (newTotalSpending > settings.spending_limit) {
         console.log('Spending limit exceeded, scheduling notification');
-        await this.notificationService.scheduleLocalNotification(
-          'Monthly Spending Limit Exceeded',
-          `Your total spending of $${newTotalSpending.toFixed(2)} this month exceeds your limit of $${settings.spending_limit.toFixed(2)}.`
-        );
+        try {
+          await this.notificationService.scheduleLocalNotification(
+            'Monthly Spending Limit Exceeded',
+            `Your total spending of $${newTotalSpending.toFixed(2)} this month exceeds your limit of $${settings.spending_limit.toFixed(2)}.`
+          );
+        } catch (notificationError) {
+          console.error('Error scheduling spending limit notification:', notificationError);
+          await Toast.show({
+            text: 'Unable to send spending limit notification. Please check your notification settings.',
+            duration: 'long',
+            position: 'bottom'
+          });
+        }
       } else {
         console.log('Spending limit not exceeded');
       }
